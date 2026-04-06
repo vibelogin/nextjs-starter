@@ -60,13 +60,13 @@ src/
   middleware.ts           # Route protection
 ```
 
-> **Note:** The auth API route is at `api/auth/[...all]/route.ts` — this is a [Next.js catch-all route](https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#catch-all-segments) that handles all auth endpoints (`/api/auth/signin`, `/api/auth/signup`, `/api/auth/signout`, etc.) in one file.
+> **Note:** The auth route uses a [Next.js catch-all segment](https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#catch-all-segments) (`[...all]`) so one file handles all auth endpoints — `/api/auth/signin`, `/api/auth/signup`, `/api/auth/signout`, etc.
 
 ## How it works
 
 1. **`middleware.ts`** — Validates the JWT access token on every request. Unauthenticated users are redirected to `/login`. Public routes (`/`, `/login`, `/signup`) are excluded.
 
-2. **`api/auth/[...all]/route.ts`** — A single catch-all API route that proxies all auth requests (sign in, sign up, sign out, session) to the VibeLogin API. This is the only server-side setup needed.
+2. **`api/auth/route.ts`** — A single API route that proxies all auth requests (sign in, sign up, sign out, session) to the VibeLogin API. This is the only server-side setup needed.
 
 3. **`layout.tsx`** — Wraps the app in `VibeAuthProvider` so client components can use `useAuth()` and `useUser()` hooks.
 
