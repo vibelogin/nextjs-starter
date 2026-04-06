@@ -64,13 +64,55 @@ src/
 
 ## How it works
 
-1. **`middleware.ts`** — Validates the JWT access token on every request. Unauthenticated users are redirected to `/login`. Public routes (`/`, `/login`, `/signup`) are excluded.
+1. **`middleware.ts`** — Protects your routes. Every request is checked for a valid JWT access token. If the user isn't logged in, they're redirected to the sign-in page.
 
 2. **`api/auth/route.ts`** — A single API route that proxies all auth requests (sign in, sign up, sign out, session) to the VibeLogin API. This is the only server-side setup needed.
 
 3. **`layout.tsx`** — Wraps the app in `VibeAuthProvider` so client components can use `useAuth()` and `useUser()` hooks.
 
 4. **`page.tsx`** — Uses `getSession()` in a Server Component to check auth state without a network call (JWT-only verification).
+
+## Route protection
+
+The middleware controls which routes require login and which are open to everyone.
+
+```ts
+// middleware.ts
+export default hostedAuthMiddleware({
+  projectId: process.env.VIBELOGIN_PROJECT_ID!,
+  publicRoutes: ["/", "/login", "/signup"],
+  signInUrl: "/login",
+});
+```
+
+**How it works:**
+
+- **By default, every route requires login.** If a user visits any page without a valid session, they are redirected to `signInUrl` (defaults to `/login`).
+- **`publicRoutes`** — An array of paths that anyone can access without logging in. Add your public pages here (landing page, pricing, docs, etc.).
+- **`signInUrl`** — Where unauthenticated users are sent. After they log in, they're redirected back to the page they originally tried to visit.
+
+**Examples:**
+
+```ts
+// Only the home page is public — everything else requires login
+publicRoutes: ["/"]
+
+// Marketing pages + auth pages are public
+publicRoutes: ["/", "/pricing", "/about", "/login", "/signup"]
+
+// Use wildcards to make an entire section public
+publicRoutes: ["/", "/blog/:path*", "/docs/:path*", "/login", "/signup"]
+```
+
+**The `matcher` config** tells Next.js which requests the middleware should run on. The default excludes static assets:
+
+```ts
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+This means the middleware runs on every page and API route, but skips Next.js internal assets like images and CSS. You generally don't need to change this.
 
 ## Learn more
 
