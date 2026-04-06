@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createHostedServerHelpers } from "@vibelogin/nextjs/hosted-server";
+import { createHostedServerHelpers } from "@vibelogin/nextjs/server";
 
 const { getSession } = createHostedServerHelpers({
   projectId: process.env.VIBELOGIN_PROJECT_ID!,
