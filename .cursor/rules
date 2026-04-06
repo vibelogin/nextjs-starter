@@ -1,0 +1,58 @@
+This project uses VibeLogin (@vibelogin/nextjs) for authentication.
+
+## Authentication Architecture
+
+- Auth provider: VibeLogin (https://vibelogin.com)
+- SDK: @vibelogin/nextjs
+- Mode: Hosted redirect (users authenticate on auth.vibelogin.com, then return via callback)
+
+## Key Files
+
+- `src/middleware.ts` — Route protection. Uses `hostedAuthMiddleware()` to verify JWT on every request. Public routes are listed in the `publicRoutes` array.
+- `src/app/api/auth/[...all]/route.ts` — Auth API handler. Proxies sign in, sign up, sign out, and session calls to VibeLogin API.
+- `src/app/auth/callback/route.ts` — OAuth/login callback handler (if using redirect mode with callback).
+- `src/app/layout.tsx` — Wraps app in `VibeAuthProvider` for client-side auth hooks.
+
+## Auth Patterns
+
+### Protect a route
+Routes are protected by default via middleware. To make a route public, add it to `publicRoutes` in `src/middleware.ts`:
+```ts
+publicRoutes: ["/", "/login", "/signup", "/pricing"]
+```
+
+### Read session (Server Component)
+```ts
+import { createHostedServerHelpers } from "@vibelogin/nextjs/server";
+const { getSession } = createHostedServerHelpers({
+  projectId: process.env.VIBELOGIN_PROJECT_ID!,
+});
+const session = await getSession(); // { userId, sessionId, role, expiresAt }
+```
+
+### Read user (Client Component)
+```ts
+import { useUser } from "@vibelogin/nextjs/client";
+const user = useUser(); // { id, email, name, role, emailVerified }
+```
+
+### Auth actions (Client Component)
+```ts
+import { useAuth } from "@vibelogin/nextjs/client";
+const { signIn, signUp, signOut } = useAuth();
+await signIn(email, password);
+await signUp({ email, password, name });
+await signOut();
+```
+
+## Environment Variables
+
+- `VIBELOGIN_PROJECT_ID` — Project UUID from app.vibelogin.com
+- `VIBELOGIN_SECRET_KEY` — Server-side secret key (never expose to client)
+- `NEXT_PUBLIC_VIBELOGIN_PUBLISHABLE_KEY` — Client-side publishable key
+
+## Do NOT
+
+- Do not build custom auth logic (password hashing, JWT signing, session management). VibeLogin handles all of this.
+- Do not store passwords or tokens manually. The SDK manages cookies automatically.
+- Do not import from `@vibelogin/nextjs/server` in client components (it uses server-only APIs).
